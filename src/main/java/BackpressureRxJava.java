@@ -5,28 +5,40 @@ import java.util.concurrent.TimeUnit;
 
 public class BackpressureRxJava {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
-        // Productor rápido
+        // Productor rápido: emite un valor cada 1 ms
         Flowable<Long> productor = Flowable
                 .interval(1, TimeUnit.MILLISECONDS)
                 .onBackpressureBuffer(
                         500,
                         v -> System.out.println("[BUFFER LLENO] descartado: " + v)
-                );
+                )
+                // Para que el flujo termine y no se quede infinito
+                .take(2000);
 
         System.out.println("Suscribiendo consumidor lento...");
 
         productor
-                .observeOn(Schedulers.io())
-                .subscribe(
+                .observeOn(Schedulers.io()) // procesar en otro hilo
+                .blockingSubscribe(
                         v -> {
-                            System.out.println("Procesando: " + v);
-                            Thread.sleep(100);
+                            // Consumidor lento
+                            System.out.println("Procesando: " + v + " en " + Thread.currentThread().getName());
+                            try {
+                                Thread.sleep(100); // simula trabajo pesado
+                            } catch (InterruptedException e) {
+                                System.err.println("Hilo interrumpido");
+                                Thread.currentThread().interrupt();
+                            }
                         },
-                        Throwable::printStackTrace
+                        error -> {
+                            System.err.println("Ocurrió un error en el flujo:");
+                            error.printStackTrace();
+                        },
+                        () -> System.out.println("Flujo completado correctamente")
                 );
 
-        Thread.sleep(10000);
+        System.out.println("Programa terminado.");
     }
 }
