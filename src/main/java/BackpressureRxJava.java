@@ -7,38 +7,23 @@ public class BackpressureRxJava {
 
     public static void main(String[] args) {
 
-        // Productor rápido: emite un valor cada 1 ms
         Flowable<Long> productor = Flowable
                 .interval(1, TimeUnit.MILLISECONDS)
                 .onBackpressureBuffer(
-                        500,
+                        500, // tamaño del buffer
                         v -> System.out.println("[BUFFER LLENO] descartado: " + v)
                 )
-                // Para que el flujo termine y no se quede infinito
                 .take(2000);
 
-        System.out.println("Suscribiendo consumidor lento...");
-
         productor
-                .observeOn(Schedulers.io()) // procesar en otro hilo
+                .observeOn(Schedulers.io())
                 .blockingSubscribe(
                         v -> {
-                            // Consumidor lento
-                            System.out.println("Procesando: " + v + " en " + Thread.currentThread().getName());
-                            try {
-                                Thread.sleep(100); // simula trabajo pesado
-                            } catch (InterruptedException e) {
-                                System.err.println("Hilo interrumpido");
-                                Thread.currentThread().interrupt();
-                            }
+                            System.out.println("Procesando: " + v);
+                            Thread.sleep(100);
                         },
-                        error -> {
-                            System.err.println("Ocurrió un error en el flujo:");
-                            error.printStackTrace();
-                        },
-                        () -> System.out.println("Flujo completado correctamente")
+                        Throwable::printStackTrace,
+                        () -> System.out.println("Flujo completado")
                 );
-
-        System.out.println("Programa terminado.");
     }
 }
