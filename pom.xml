@@ -22,9 +22,14 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
+                    <!-- OJO: sin paquete, porque la clase está en el default package -->
                     <mainClass>BackpressureRxJava</mainClass>
+
+                    <!-- Evita problemas con hilos daemon de RxJava -->
+                    <cleanupDaemonThreads>false</cleanupDaemonThreads>
                 </configuration>
             </plugin>
         </plugins>
     </build>
 </project>
+
