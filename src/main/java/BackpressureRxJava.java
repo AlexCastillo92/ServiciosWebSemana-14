@@ -11,9 +11,9 @@ public class BackpressureRxJava {
                 .interval(1, TimeUnit.MILLISECONDS)
                 .onBackpressureBuffer(
                         500, // tamaño del buffer
-                        v -> System.out.println("[BUFFER LLENO] descartado: " + v)
+                        () -> System.out.println("[BUFFER LLENO]")
                 )
-                .take(2000);
+                .take(50); // demo reducido para ejecución rápida
 
         productor
                 .observeOn(Schedulers.io())
